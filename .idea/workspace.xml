@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="76335dff-ca5e-4906-be6f-8dc98ddd2bed" name="Default Changelist" comment="" />
+    <list default="true" id="76335dff-ca5e-4906-be6f-8dc98ddd2bed" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/company/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/company/Main.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
   <component name="ProjectId" id="1l98XwpXIKXJ38yUqc7exR74yH6" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -44,6 +51,30 @@
     <servers />
   </component>
   <component name="WindowStateProjectService">
+    <state x="1125" y="618" key="Github.ShareDialog" timestamp="1606998196540">
+      <screen x="0" y="0" width="2498" height="1440" />
+    </state>
+    <state x="1125" y="618" key="Github.ShareDialog/2560.602.1858.1080/0.0.2498.1440@0.0.2498.1440" timestamp="1606998196540" />
+    <state x="1044" y="418" key="Github.UntrackedFilesDialog" timestamp="1606998218912">
+      <screen x="0" y="0" width="2498" height="1440" />
+    </state>
+    <state x="1044" y="418" key="Github.UntrackedFilesDialog/2560.602.1858.1080/0.0.2498.1440@0.0.2498.1440" timestamp="1606998218912" />
+    <state width="2455" height="414" key="GridCell.Tab.0.bottom" timestamp="1606998056651">
+      <screen x="0" y="0" width="2498" height="1440" />
+    </state>
+    <state width="2455" height="414" key="GridCell.Tab.0.bottom/2560.602.1858.1080/0.0.2498.1440@0.0.2498.1440" timestamp="1606998056651" />
+    <state width="2455" height="414" key="GridCell.Tab.0.center" timestamp="1606998056651">
+      <screen x="0" y="0" width="2498" height="1440" />
+    </state>
+    <state width="2455" height="414" key="GridCell.Tab.0.center/2560.602.1858.1080/0.0.2498.1440@0.0.2498.1440" timestamp="1606998056651" />
+    <state width="2455" height="414" key="GridCell.Tab.0.left" timestamp="1606998056650">
+      <screen x="0" y="0" width="2498" height="1440" />
+    </state>
+    <state width="2455" height="414" key="GridCell.Tab.0.left/2560.602.1858.1080/0.0.2498.1440@0.0.2498.1440" timestamp="1606998056650" />
+    <state width="2455" height="414" key="GridCell.Tab.0.right" timestamp="1606998056651">
+      <screen x="0" y="0" width="2498" height="1440" />
+    </state>
+    <state width="2455" height="414" key="GridCell.Tab.0.right/2560.602.1858.1080/0.0.2498.1440@0.0.2498.1440" timestamp="1606998056651" />
     <state x="750" y="365" key="SettingsEditor" timestamp="1606998052124">
       <screen x="0" y="0" width="2498" height="1440" />
     </state>
