@@ -28,9 +28,12 @@ public class Sender {
     static int send_base;
 
     // total number of packets to send
+    static File raw_image = null;
     static FileInputStream file_in_str = null;
     static int file_size = 0;
     static int no_of_packet = 0;
+
+    // packets in the window to send the packets again if the dublicate ACK received
     static Vector <byte[]> window_packets;
 
     //Semaphore will be used to protect the shared variable next_seq_number and done variables
@@ -54,24 +57,15 @@ public class Sender {
         window_size = Integer.parseInt(args[2]);
         timeout = Integer.parseInt(args[3]);
 
-        // getting the image file
-        File raw_image;
-
-        // data will be stored in this byte array
-        byte[] data_in_byte = new byte[PACKET_DATA_SIZE];
-
-        // this will be 1024 byte while getting the data each time
-        ByteBuffer packet_buffer;
-
-        DatagramSocket client_socket;
 
         try {
             // creating client socket
-            client_socket = new DatagramSocket();
+            DatagramSocket client_socket = new DatagramSocket();
 
             // getting image file as FileInputStream & finding the total number of packet will sent
+            // getting the image file
             raw_image = new File(image_path);
-            FileInputStream file_in_str = new FileInputStream(raw_image);
+            file_in_str = new FileInputStream(raw_image);
             file_size = file_in_str.available();
             no_of_packet = file_size / PACKET_DATA_SIZE ;
             // System.out.println(no_of_packet); // 4175
@@ -113,8 +107,6 @@ public class Sender {
             try {
                 while(true) {
                     // Send packets in window
-                    for packet in packets:
-                    client_socket.send(packet);
 
 
                     // Wait for main thread notification or timeout
@@ -141,8 +133,7 @@ public class Sender {
         }
 
         public int findACKseq (byte [] ack_data) {
-
-
+            return 0;
         }
         public void run() {
             System.out.println("In ACKListener");
