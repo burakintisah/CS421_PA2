@@ -111,8 +111,15 @@ public class Sender {
             try {
                 while(!done) {
                     // Send packets in window
+                    if (next_seq_number < send_base + window_size){
+                        // acquire lock since we will be changing next seq number
+                        lock.acquire();
+                        if (send_base == next_seq_number){
+                            // start timer
+                        }
 
 
+                    }
                     // Wait for main thread notification or timeout
                     Thread.sleep(timeout);
                 }
