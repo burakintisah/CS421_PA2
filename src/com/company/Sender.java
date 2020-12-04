@@ -154,8 +154,8 @@ public class Sender {
                 try {
                     client_socket.receive(ack_packet);
                     // find which packet's ACK is received
-                    int noOfACK = findACKseq(ack_data);
-                    System.out.println("Received Ack " + noOfACK);
+                    int ACKno = findACKseq(ack_data);
+                    System.out.println("ACK # " + ACKno);
 
 
 
