@@ -91,10 +91,10 @@ public class Sender {
 
     public class DataSender extends Thread {
 
-        private DatagramSocket client_socket;
-        //private DatagramPacket packetOut;
-        //private byte[] dataRead;
-        //private byte[] dataSeq;
+        DatagramSocket client_socket;
+        //DatagramPacket packet_datagram;
+        //byte[] packet_data;
+        //byte[] packet_seq;
 
         public DataSender (DatagramSocket client_socket){
             this.client_socket = client_socket;
@@ -122,10 +122,10 @@ public class Sender {
     }
 
     public class ACKListener extends Thread {
-        private DatagramSocket client_socket;
-        private DatagramPacket ack_packet;
-        //private Timeout mytimeout;
-        private byte[] ack_data;
+        DatagramSocket client_socket;
+        DatagramPacket ack_packet;
+        //Timeout t;
+        byte[] ack_data;
 
         public ACKListener (DatagramSocket client_socket){
             this.client_socket = client_socket;
