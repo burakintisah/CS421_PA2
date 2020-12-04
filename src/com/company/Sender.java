@@ -13,6 +13,7 @@ public class Sender {
     static final int PACKET_SIZE = 1024;
     static final String IP = "127.0.0.1";
 
+    // command line arguments
     static String image_path = "";
     static int port;
     static int window_size;
@@ -20,18 +21,15 @@ public class Sender {
 
 
     static boolean done = false; // indicate we have sent all packets
+    static int next_seq_number; // increase by one each packet sent
+    static int send_base; // beginning of the window
 
-    // increase by one each packet sent
-    static int next_seq_number ;
 
-    // beginning of the window
-    static int send_base;
-
-    // total number of packets to send
-    static File raw_image = null;
+    static File raw_image = null; // image from the path
     static FileInputStream file_in_str = null;
-    static int file_size = 0;
-    static int no_of_packet = 0;
+    static int file_size = 0; //image size
+    static int no_of_packet = 0; // total number of packets to send
+
 
     // packets in the window to send the packets again if the dublicate ACK received
     static Vector <byte[]> window_packets;
@@ -40,8 +38,10 @@ public class Sender {
     static Semaphore lock = null;
 
     public Sender (DatagramSocket client_socket) {
+
         DataSender ds = new DataSender(client_socket);
         ACKListener ack = new ACKListener(client_socket);
+
         ds.start();
         ack.start();
     }
@@ -89,23 +89,27 @@ public class Sender {
 
     }
 
+
+    // First thread for sending data as described in the assignment
     public class DataSender extends Thread {
 
         DatagramSocket client_socket;
-        //DatagramPacket packet_datagram;
-        //byte[] packet_data;
-        //byte[] packet_seq;
+        byte[] packet_data;
+        byte[] packet_seq;
+        DatagramPacket packet_datagram;
 
-        public DataSender (DatagramSocket client_socket){
-            this.client_socket = client_socket;
 
+        public DataSender (DatagramSocket _client_socket){
+            client_socket = _client_socket;
+            packet_data = null;
+            packet_seq = null;
+            packet_datagram = null;
         }
 
         public void run() {
 
-
             try {
-                while(true) {
+                while(!done) {
                     // Send packets in window
 
 
@@ -121,23 +125,29 @@ public class Sender {
 
     }
 
+
+    // Second thread for listening acknowledgements as described in the assignment
     public class ACKListener extends Thread {
+
         DatagramSocket client_socket;
         DatagramPacket ack_packet;
-        //Timeout t;
         byte[] ack_data;
+        //Timeout t;
 
-        public ACKListener (DatagramSocket client_socket){
-            this.client_socket = client_socket;
 
+        public ACKListener (DatagramSocket _client_socket){
+            client_socket = _client_socket;
+            ack_packet = null;
+            ack_data = null;
         }
 
         public int findACKseq (byte [] ack_data) {
             return 0;
         }
+
         public void run() {
-            System.out.println("In ACKListener");
-            ack_data = new byte[2];
+
+            ack_data = new byte[ACK_PACKET_SIZE];
             ack_packet = new DatagramPacket(ack_data, ACK_PACKET_SIZE);
 
             while(!done) {
