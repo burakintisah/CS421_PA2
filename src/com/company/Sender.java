@@ -70,7 +70,8 @@ public class Sender {
             no_of_packet = file_size / PACKET_DATA_SIZE ;
             System.out.println(no_of_packet); // 4175
 
-            window_packets = new Vector<byte[]>(window_size);
+            int len = window_size;
+            window_packets = new Vector<byte[]>(len);
             next_seq_number = 1;
             send_base = 1;
             done = false;
