@@ -118,16 +118,57 @@ public class Sender {
                             // start timer
                         }
 
+                        byte[] data_out = new byte[1024];
+                        boolean last_package_sent = false;
+                        // if we already sent this data package before, we take it from the window_packets
+                        if( next_seq_number <= window_packets.size()){
+                            data_out = window_packets.get(next_seq_number - 1)
+
+                        }
+                        else{
+                            byte[] data_for_package = new byte[PACKET_DATA_SIZE]
+                            int data_size = file_in_str.read(data_for_package,0,1024);
+
+                            if(data_size == -1 ){   // no more data because the end of the file has been reached.
+                                last_package_sent = true;
+                            }
+                            else{
+                                // conversion of the sequence number
+                                data_out[0] = (byte) ((next_seq_number >> 8) & 0xFF);
+                                data_out[1] = (byte) (next_seq_number & 0xFF);
+
+                                // we put data to the package
+                                for(i=0; i<PACKET_DATA_SIZE; i++){
+                                    data_out[i+2] = data_for_package[i];
+                                }
+
+                                // package is ready
+                                window_packets.add(data_out);
+
+                            }
+                        }
+                        if(!last_package_sent){
+                            DatagramPacket next_packet = new DatagramPacket(data_out, data_out.length, IP,port);
+                            clientSocket.send(next_packet);
+                            next_seq_number++;
+                        }
+
+
+                        lock.release();
 
                     }
                     // Wait for main thread notification or timeout
                     Thread.sleep(timeout);
                 }
+                file_in_str.close();
+                System.exit(1);
+
             }
             // Stop if main thread interrupts this thread
             catch (InterruptedException e) {
                 return;
             }
+
         }
 
     }
@@ -149,6 +190,8 @@ public class Sender {
         }
 
         public int findACKseq (byte [] ack_data) {
+
+
             return 0;
         }
 
@@ -163,8 +206,21 @@ public class Sender {
                     // find which packet's ACK is received
                     int ACKno = findACKseq(ack_data);
                     System.out.println("ACK # " + ACKno);
-
-
+                // check is transfer done or not
+                    if( ACKno == no_of_packet){
+                        done = true;
+                    }
+                    // check if we obtained a valid ack number or not
+                    else if (send_base <= ACKno && ACKno < no_of_packet ){
+                        send_base = ACKno + 1;
+                        // we will insert timer here
+                    }
+                    // check if we obtained a duplicate ACK from receiver
+                    else if (ACKno == send_base -1 ){
+                        lock.acquire();
+                        next_seq_number = send_base;
+                        lock.release();
+                    }
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -176,4 +232,3 @@ public class Sender {
         }
     }
 }
-
