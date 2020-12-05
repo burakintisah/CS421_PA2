@@ -1,4 +1,3 @@
-package com.company;
 import java.io.*;
 import java.net.*;
 import java.nio.ByteBuffer;
@@ -57,7 +56,7 @@ public class Sender {
         port = Integer.parseInt(args[1]);
         window_size = Integer.parseInt(args[2]);
         timeout = Integer.parseInt(args[3]);
-
+        System.out.println(image_path);
 
         try {
             // creating client socket
@@ -69,7 +68,7 @@ public class Sender {
             file_in_str = new FileInputStream(raw_image);
             file_size = file_in_str.available();
             no_of_packet = file_size / PACKET_DATA_SIZE ;
-            // System.out.println(no_of_packet); // 4175
+            System.out.println(no_of_packet); // 4175
 
             window_packets = new Vector<byte[]>(window_size);
             next_seq_number = 1;
@@ -125,11 +124,11 @@ public class Sender {
                         boolean last_package_sent = false;
                         // if we already sent this data package before, we take it from the window_packets
                         if( next_seq_number <= window_packets.size()){
-                            data_out = window_packets.get(next_seq_number - 1)
+                            data_out = window_packets.get(next_seq_number - 1);
 
                         }
                         else{
-                            byte[] data_for_package = new byte[PACKET_DATA_SIZE]
+                            byte[] data_for_package = new byte[PACKET_DATA_SIZE];
                             int data_size = file_in_str.read(data_for_package,0,1022);
 
                             if(data_size == -1 ){   // no more data because the end of the file has been reached.
@@ -141,7 +140,7 @@ public class Sender {
                                 data_out[1] = (byte) (next_seq_number & 0xFF);
 
                                 // we put data to the package
-                                for(i=0; i<PACKET_DATA_SIZE; i++){
+                                for(int i=0; i<PACKET_DATA_SIZE; i++){
                                     data_out[i+2] = data_for_package[i];
                                 }
 
@@ -246,6 +245,6 @@ public class Sender {
     public void startTimer(){
         timer = new Timer();  // maybe we need to cancel previous schedule here
         timeout_task = new TimeoutTask();
-        timer.schedule( timeout_task, timeout )
+        timer.schedule( timeout_task, timeout );
     }
 }
