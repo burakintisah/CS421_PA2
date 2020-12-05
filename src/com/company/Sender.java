@@ -92,16 +92,9 @@ public class Sender {
     public class DataSender extends Thread {
 
         DatagramSocket client_socket;
-        byte[] packet_data;
-        byte[] packet_seq;
-        DatagramPacket packet_datagram;
-
 
         public DataSender (DatagramSocket _client_socket){
             client_socket = _client_socket;
-            packet_data = null;
-            packet_seq = null;
-            packet_datagram = null;
         }
 
         public void run() {
@@ -184,20 +177,14 @@ public class Sender {
     public class ACKListener extends Thread {
 
         DatagramSocket client_socket;
-        DatagramPacket ack_packet;
-        byte[] ack_data;
-        //Timeout t;
-
 
         public ACKListener (DatagramSocket _client_socket){
             client_socket = _client_socket;
-            ack_packet = null;
-            ack_data = null;
         }
 
         public void run() {
-            ack_data = new byte[ACK_PACKET_SIZE];
-            ack_packet = new DatagramPacket(ack_data, ACK_PACKET_SIZE);
+            byte[] ack_data = new byte[ACK_PACKET_SIZE];
+            DatagramPacket ack_packet = new DatagramPacket(ack_data, ACK_PACKET_SIZE);
 
             while(!done) {
                 try {
