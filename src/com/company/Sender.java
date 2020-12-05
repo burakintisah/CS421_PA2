@@ -115,7 +115,7 @@ public class Sender {
                             startTimer();
                         }
 
-                        byte[] data_out = new byte[1024];
+                        byte[] data_out = new byte[PACKET_SIZE];
 
                         // if we already sent this data package before, we take it from the window_packets
                         if (next_seq_number <= window_packets.size()) {
@@ -139,7 +139,7 @@ public class Sender {
                             }
                         }
 
-                        System.out.println(next_seq_number);
+                        //System.out.println(next_seq_number);
                         if (next_seq_number != no_of_packet + 1 ) {
                             DatagramPacket next_packet = new DatagramPacket(data_out, data_out.length, InetAddress.getByName(IP), port);
                             client_socket.send(next_packet);
@@ -193,22 +193,23 @@ public class Sender {
 
                     // find which packet's ACK is received
                     int ACKno = ((ack_data[0] & 0xff) << 8) | (ack_data[1] & 0xff);
-                    System.out.println("ACK # " + ACKno);
+                    // System.out.println("ACK # " + ACKno);
 
                     // check is transfer done or not
                     if (ACKno == no_of_packet) {
                         done = true;
-
                     }
+
                     // check if we obtained a valid ack number or not
                     else if (send_base <= ACKno && ACKno < no_of_packet) {
                         send_base = ACKno + 1;
                         startTimer();
                     }
+
                     // check if we obtained a duplicate ACK from receiver
                     else if (ACKno == send_base - 1) {
                         lock.acquire();
-                        System.out.println("Dublicate ACK");
+                        //System.out.println("Dublicate ACK received");
                         next_seq_number = send_base;
                         lock.release();
                     }
@@ -227,7 +228,7 @@ public class Sender {
         public void run() {
             try{
                 lock.acquire();
-                System.out.println("Time out occured");
+                //System.out.println("Time out occured");
                 next_seq_number = send_base;
                 lock.release();
             }
