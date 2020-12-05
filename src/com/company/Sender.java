@@ -150,8 +150,8 @@ public class Sender {
                             }
                         }
                         if(!last_package_sent){
-                            DatagramPacket next_packet = new DatagramPacket(data_out, data_out.length, IP,port);
-                            clientSocket.send(next_packet);
+                            DatagramPacket next_packet = new DatagramPacket(data_out, data_out.length,  InetAddress.getByName(IP),port);
+                            client_socket.send(next_packet);
                             next_seq_number++;
                         }
 
@@ -167,7 +167,11 @@ public class Sender {
 
             }
             // Stop if main thread interrupts this thread
-            catch (InterruptedException e) {
+            catch (SocketException e) {
+                e.printStackTrace();
+            }catch (IOException e) {
+                e.printStackTrace();
+            }catch (InterruptedException e) {
                 return;
             }
 
@@ -218,7 +222,12 @@ public class Sender {
                         lock.release();
                     }
 
-                } catch (IOException e) {
+                }
+                catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                catch(InterruptedException e) {
                     e.printStackTrace();
                 }
 
@@ -244,7 +253,7 @@ public class Sender {
     // we schedule timeout task here
     public void startTimer(){
         timer = new Timer();  // maybe we need to cancel previous schedule here
-        timeout_task = new TimeoutTask();
+        TimeoutTask timeout_task = new TimeoutTask();
         timer.schedule( timeout_task, timeout );
     }
 }
