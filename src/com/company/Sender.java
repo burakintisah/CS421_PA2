@@ -17,7 +17,8 @@ public class Sender {
     static String image_path = "";
     static int port;
     static int window_size;
-    static int timeout; // maybe we can make it long
+    static long timeout; // maybe we can make it long
+    static Timer timer;
 
 
     static boolean done = false; // indicate we have sent all packets
@@ -85,8 +86,6 @@ public class Sender {
         }catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
 
 
@@ -109,13 +108,17 @@ public class Sender {
         public void run() {
 
             try {
+                raw_image = new File(image_path);
+                file_in_str = new FileInputStream(raw_image); // maybe we do not need this part again
+                file_size = file_in_str.available();
+
                 while(!done) {
                     // Send packets in window
                     if (next_seq_number < send_base + window_size){
                         // acquire lock since we will be changing next seq number
                         lock.acquire();
                         if (send_base == next_seq_number){
-                            // start timer
+                            startTimer();
                         }
 
                         byte[] data_out = new byte[1024];
@@ -127,7 +130,7 @@ public class Sender {
                         }
                         else{
                             byte[] data_for_package = new byte[PACKET_DATA_SIZE]
-                            int data_size = file_in_str.read(data_for_package,0,1024);
+                            int data_size = file_in_str.read(data_for_package,0,1022);
 
                             if(data_size == -1 ){   // no more data because the end of the file has been reached.
                                 last_package_sent = true;
@@ -189,14 +192,7 @@ public class Sender {
             ack_data = null;
         }
 
-        public int findACKseq (byte [] ack_data) {
-
-
-            return 0;
-        }
-
         public void run() {
-
             ack_data = new byte[ACK_PACKET_SIZE];
             ack_packet = new DatagramPacket(ack_data, ACK_PACKET_SIZE);
 
@@ -204,8 +200,9 @@ public class Sender {
                 try {
                     client_socket.receive(ack_packet);
                     // find which packet's ACK is received
-                    int ACKno = findACKseq(ack_data);
+                    int ACKno = ((ack_data[0] & 0xff) << 8) | (ack_data[1] & 0xff);
                     System.out.println("ACK # " + ACKno);
+
                 // check is transfer done or not
                     if( ACKno == no_of_packet){
                         done = true;
@@ -213,7 +210,7 @@ public class Sender {
                     // check if we obtained a valid ack number or not
                     else if (send_base <= ACKno && ACKno < no_of_packet ){
                         send_base = ACKno + 1;
-                        // we will insert timer here
+                        startTimer();
                     }
                     // check if we obtained a duplicate ACK from receiver
                     else if (ACKno == send_base -1 ){
@@ -230,5 +227,25 @@ public class Sender {
             //if transfer is completed, close the socket
             client_socket.close();
         }
+    }
+    // when scheduled timeout occurs this task is implemented
+    public class TimeoutTask extends TimerTask {
+        public void run() {
+            try{
+                lock.acquire();
+                next_seq_number = send_base;
+                lock.release();
+            }
+            catch(InterruptedException e) {
+
+                e.printStackTrace();
+            }
+        }
+    }
+    // we schedule timeout task here
+    public void startTimer(){
+        timer = new Timer();  // maybe we need to cancel previous schedule here
+        timeout_task = new TimeoutTask();
+        timer.schedule( timeout_task, timeout )
     }
 }
