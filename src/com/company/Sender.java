@@ -1,3 +1,5 @@
+package com.company;
+
 import java.io.*;
 import java.net.*;
 import java.nio.ByteBuffer;
@@ -36,6 +38,7 @@ public class Sender {
 
     //Semaphore will be used to protect the shared variable next_seq_number and done variables
     static Semaphore lock = null;
+    static Semaphore timeLock = null;
 
     public Sender (DatagramSocket client_socket) {
 
@@ -67,8 +70,8 @@ public class Sender {
             raw_image = new File(image_path);
             file_in_str = new FileInputStream(raw_image);
             file_size = file_in_str.available();
-            no_of_packet = file_size / PACKET_DATA_SIZE ;
-            System.out.println(no_of_packet); // 4175
+            no_of_packet = (file_size / PACKET_DATA_SIZE ) + 1 ;
+            System.out.println(no_of_packet); // 4176
 
             int len = window_size;
             window_packets = new Vector<byte[]>(len);
@@ -76,6 +79,7 @@ public class Sender {
             send_base = 1;
             done = false;
             lock = new Semaphore(1);
+            timeLock = new Semaphore(1);
 
             // this will start the DataSender && ACKListener -- check constructor of the Sender class
             new Sender(client_socket);
@@ -101,61 +105,57 @@ public class Sender {
         public void run() {
 
             try {
-                raw_image = new File(image_path);
-                file_in_str = new FileInputStream(raw_image); // maybe we do not need this part again
-                file_size = file_in_str.available();
-
                 while(!done) {
                     // Send packets in window
-                    if (next_seq_number < send_base + window_size){
+                    if (next_seq_number < send_base + window_size) {
                         // acquire lock since we will be changing next seq number
                         lock.acquire();
-                        if (send_base == next_seq_number){
+
+                        if (send_base == next_seq_number) {
                             startTimer();
                         }
 
                         byte[] data_out = new byte[1024];
-                        boolean last_package_sent = false;
+
                         // if we already sent this data package before, we take it from the window_packets
-                        if( next_seq_number <= window_packets.size()){
+                        if (next_seq_number <= window_packets.size()) {
                             data_out = window_packets.get(next_seq_number - 1);
-
-                        }
-                        else{
+                        }else {
                             byte[] data_for_package = new byte[PACKET_DATA_SIZE];
-                            int data_size = file_in_str.read(data_for_package,0,1022);
+                            int data_size = file_in_str.read(data_for_package);
 
-                            if(data_size == -1 ){   // no more data because the end of the file has been reached.
-                                last_package_sent = true;
-                            }
-                            else{
-                                // conversion of the sequence number
+                            if (data_size > 0) {
+
                                 data_out[0] = (byte) ((next_seq_number >> 8) & 0xFF);
                                 data_out[1] = (byte) (next_seq_number & 0xFF);
 
                                 // we put data to the package
-                                for(int i=0; i<PACKET_DATA_SIZE; i++){
-                                    data_out[i+2] = data_for_package[i];
+                                for (int i = 0; i < data_size; i++) {
+                                    data_out[i + 2] = data_for_package[i];
                                 }
 
                                 // package is ready
                                 window_packets.add(data_out);
-
                             }
                         }
-                        if(!last_package_sent){
-                            DatagramPacket next_packet = new DatagramPacket(data_out, data_out.length,  InetAddress.getByName(IP),port);
+
+                        System.out.println(next_seq_number);
+                        if (next_seq_number != no_of_packet + 1 ) {
+                            DatagramPacket next_packet = new DatagramPacket(data_out, data_out.length, InetAddress.getByName(IP), port);
                             client_socket.send(next_packet);
                             next_seq_number++;
                         }
-
 
                         lock.release();
 
                     }
                     // Wait for main thread notification or timeout
-                    Thread.sleep(timeout);
+                    Thread.sleep(10);
                 }
+                // at the end of image
+                byte zero_byte = 0;
+                byte[] end_of_file = {zero_byte, zero_byte};
+                client_socket.send(new DatagramPacket(end_of_file,2, InetAddress.getByName(IP), port));
                 file_in_str.close();
                 System.exit(1);
 
@@ -190,38 +190,36 @@ public class Sender {
             while(!done) {
                 try {
                     client_socket.receive(ack_packet);
+
                     // find which packet's ACK is received
                     int ACKno = ((ack_data[0] & 0xff) << 8) | (ack_data[1] & 0xff);
                     System.out.println("ACK # " + ACKno);
 
-                // check is transfer done or not
-                    if( ACKno == no_of_packet){
+                    // check is transfer done or not
+                    if (ACKno == no_of_packet) {
                         done = true;
+
                     }
                     // check if we obtained a valid ack number or not
-                    else if (send_base <= ACKno && ACKno < no_of_packet ){
+                    else if (send_base <= ACKno && ACKno < no_of_packet) {
                         send_base = ACKno + 1;
                         startTimer();
                     }
                     // check if we obtained a duplicate ACK from receiver
-                    else if (ACKno == send_base -1 ){
+                    else if (ACKno == send_base - 1) {
                         lock.acquire();
+                        System.out.println("Dublicate ACK");
                         next_seq_number = send_base;
                         lock.release();
                     }
 
-                }
-                catch (IOException e) {
-                    // TODO Auto-generated catch block
+                } catch (IOException e) {
                     e.printStackTrace();
-                }
-                catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
 
             }
-            //if transfer is completed, close the socket
-            client_socket.close();
         }
     }
     // when scheduled timeout occurs this task is implemented
@@ -229,19 +227,30 @@ public class Sender {
         public void run() {
             try{
                 lock.acquire();
+                System.out.println("Time out occured");
                 next_seq_number = send_base;
                 lock.release();
             }
             catch(InterruptedException e) {
-
                 e.printStackTrace();
             }
         }
     }
     // we schedule timeout task here
     public void startTimer(){
-        timer = new Timer();  // maybe we need to cancel previous schedule here
-        TimeoutTask timeout_task = new TimeoutTask();
-        timer.schedule( timeout_task, timeout );
+        try {
+            timeLock.acquire();
+            //cancel previous schedule here
+            if (timer != null)
+                timer.cancel();
+            timer = new Timer();
+            TimeoutTask timeout_task = new TimeoutTask();
+            timer.schedule( timeout_task, timeout );
+            timeLock.release();
+        }
+        catch (InterruptedException e){
+            e.printStackTrace();
+        }
+
     }
 }
