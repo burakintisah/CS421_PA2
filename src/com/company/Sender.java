@@ -1,13 +1,14 @@
+package com.company;
+
 import java.io.*;
 import java.net.*;
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 
 public class Sender {
 
-    static final int PACKET_HEADER_SIZE = 2;
     static final int ACK_PACKET_SIZE = 2;
+    static final int ZERO_PACKET_SIZE = 2;
     static final int PACKET_DATA_SIZE = 1022;
     static final int PACKET_SIZE = 1024;
     static final String IP = "127.0.0.1";
@@ -23,7 +24,7 @@ public class Sender {
     static boolean done = false; // indicate we have sent all packets
     static int next_seq_number; // increase by one each packet sent
     static int send_base; // beginning of the window
-    static int count;
+    static int count; // no of times timeout occured
 
     static File raw_image = null; // image from the path
     static FileInputStream file_in_str = null;
@@ -31,11 +32,11 @@ public class Sender {
     static int no_of_packet = 0; // total number of packets to send
 
 
-    // packets in the window to send the packets again if the dublicate ACK received
+    // packets in the window to send the packets again if the timeout occures
     static Vector <byte[]> window_packets;
 
     //Semaphore will be used to protect the shared variable next_seq_number and done variables
-    static Semaphore lock = null;
+    static Semaphore seqNoLock = null;
     static Semaphore timeLock = null;
 
     public Sender (DatagramSocket client_socket) {
@@ -48,7 +49,7 @@ public class Sender {
     }
 
     // working with 127.0.0.1
-    // inputs : image path , 220, 10, 50
+    // inputs : image path , port, window size, timeout
     // can change from configurations
     public static void main(String[] args) {
 
@@ -77,11 +78,11 @@ public class Sender {
             next_seq_number = 1;
             send_base = 1;
             done = false;
-            lock = new Semaphore(1);
+            seqNoLock = new Semaphore(1);
             timeLock = new Semaphore(1);
 
             // this will start the DataSender && ACKListener -- check constructor of the Sender class
-            new Sender(client_socket);
+            Sender s = new Sender(client_socket);
 
 
         }catch (FileNotFoundException e){
@@ -108,7 +109,7 @@ public class Sender {
                     // Send packets in window
                     if (next_seq_number < send_base + window_size) {
                         // acquire lock since we will be changing next seq number
-                        lock.acquire();
+                        seqNoLock.acquire();
 
                         if (send_base == next_seq_number) {
                             startTimer();
@@ -145,17 +146,17 @@ public class Sender {
                             next_seq_number++;
                         }
 
-                        lock.release();
+                        seqNoLock.release();
 
                     }
                     // Wait for main thread notification or timeout
-                    Thread.sleep(10);
+                    Thread.sleep(0,1);
                 }
                 // at the end of image
                 System.out.print("Number of timeouts: "+ count);
                 byte zero_byte = 0;
                 byte[] end_of_file = {zero_byte, zero_byte};
-                client_socket.send(new DatagramPacket(end_of_file,2, InetAddress.getByName(IP), port));
+                client_socket.send(new DatagramPacket(end_of_file,ZERO_PACKET_SIZE, InetAddress.getByName(IP), port));
                 file_in_str.close();
                 System.exit(1);
 
@@ -211,16 +212,16 @@ public class Sender {
             }
         }
     }
+
     // when scheduled timeout occurs this task is implemented
     public class TimeoutTask extends TimerTask {
         public void run() {
             try{
-                lock.acquire();
+                seqNoLock.acquire();
                 //System.out.println("Time out occured");
                 count++;
-
                 next_seq_number = send_base;
-                lock.release();
+                seqNoLock.release();
             }
             catch(InterruptedException e) {
                 e.printStackTrace();
