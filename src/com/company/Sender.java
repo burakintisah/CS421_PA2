@@ -17,7 +17,7 @@ public class Sender {
     static String image_path = "";
     static int port;
     static int window_size;
-    static long timeout; // maybe we can make it long
+    static long timeout;
     static Timer timer;
 
 
@@ -153,7 +153,7 @@ public class Sender {
                     Thread.sleep(0,1);
                 }
                 // at the end of image
-                System.out.print("Number of timeouts: "+ count);
+                // System.out.print("Number of timeouts: "+ count);
                 byte zero_byte = 0;
                 byte[] end_of_file = {zero_byte, zero_byte};
                 client_socket.send(new DatagramPacket(end_of_file,ZERO_PACKET_SIZE, InetAddress.getByName(IP), port));
@@ -194,7 +194,6 @@ public class Sender {
 
                     // find which packet's ACK is received
                     int ACKno = ((ack_data[0] & 0xff) << 8) | (ack_data[1] & 0xff);
-                    //System.out.println("ACK # " + ACKno);
 
                     // check is transfer done or not
                     if (ACKno == no_of_packet) {
