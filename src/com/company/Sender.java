@@ -1,5 +1,3 @@
-package com.company;
-
 import java.io.*;
 import java.net.*;
 import java.nio.ByteBuffer;
@@ -25,7 +23,7 @@ public class Sender {
     static boolean done = false; // indicate we have sent all packets
     static int next_seq_number; // increase by one each packet sent
     static int send_base; // beginning of the window
-
+    static int count;
 
     static File raw_image = null; // image from the path
     static FileInputStream file_in_str = null;
@@ -59,7 +57,8 @@ public class Sender {
         port = Integer.parseInt(args[1]);
         window_size = Integer.parseInt(args[2]);
         timeout = Integer.parseInt(args[3]);
-        System.out.println(image_path);
+        //System.out.println(image_path);
+        count=0;
 
         try {
             // creating client socket
@@ -153,6 +152,7 @@ public class Sender {
                     Thread.sleep(10);
                 }
                 // at the end of image
+                System.out.print("Number of timeouts: "+ count);
                 byte zero_byte = 0;
                 byte[] end_of_file = {zero_byte, zero_byte};
                 client_socket.send(new DatagramPacket(end_of_file,2, InetAddress.getByName(IP), port));
@@ -193,33 +193,21 @@ public class Sender {
 
                     // find which packet's ACK is received
                     int ACKno = ((ack_data[0] & 0xff) << 8) | (ack_data[1] & 0xff);
-                    // System.out.println("ACK # " + ACKno);
+                    //System.out.println("ACK # " + ACKno);
 
                     // check is transfer done or not
                     if (ACKno == no_of_packet) {
                         done = true;
                     }
-
                     // check if we obtained a valid ack number or not
-                    else if (send_base <= ACKno && ACKno < no_of_packet) {
+                    else if (send_base <= ACKno && ACKno < send_base + window_size) {
                         send_base = ACKno + 1;
                         startTimer();
                     }
 
-                    // check if we obtained a duplicate ACK from receiver
-                    else if (ACKno == send_base - 1) {
-                        lock.acquire();
-                        //System.out.println("Dublicate ACK received");
-                        next_seq_number = send_base;
-                        lock.release();
-                    }
-
                 } catch (IOException e) {
                     e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
                 }
-
             }
         }
     }
@@ -229,6 +217,8 @@ public class Sender {
             try{
                 lock.acquire();
                 //System.out.println("Time out occured");
+                count++;
+
                 next_seq_number = send_base;
                 lock.release();
             }
